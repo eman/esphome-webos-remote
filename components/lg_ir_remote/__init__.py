@@ -16,6 +16,7 @@ DEPENDENCIES = ["remote_transmitter"]
 
 CONF_TRANSMITTER_ID = "transmitter_id"
 CONF_HOLD_STYLE = "hold_style"
+CONF_ALLOW_UNSAFE_CODES = "allow_unsafe_codes"
 CONF_HOLD = "hold"
 CONF_KEY = "key"
 
@@ -38,6 +39,9 @@ CONFIG_SCHEMA = cv.Schema(
         cv.Optional(CONF_HOLD_STYLE, default="repeat_codes"): cv.enum(
             HOLD_STYLES, lower=True
         ),
+        # Lets send() transmit hotel, factory, service and set-top codes. Leave off: some of them change settings
+        # that are hard to undo, and set-top power opens a dialog that swallows every key.
+        cv.Optional(CONF_ALLOW_UNSAFE_CODES, default=False): cv.boolean,
     }
 ).extend(cv.COMPONENT_SCHEMA)
 
@@ -48,6 +52,7 @@ async def to_code(config):
     tx = await cg.get_variable(config[CONF_TRANSMITTER_ID])
     cg.add(var.set_transmitter(tx))
     cg.add(var.set_hold_style(config[CONF_HOLD_STYLE]))
+    cg.add(var.set_allow_unsafe_codes(config[CONF_ALLOW_UNSAFE_CODES]))
 
 
 @automation.register_action(

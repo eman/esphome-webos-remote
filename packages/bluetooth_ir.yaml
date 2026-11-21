@@ -33,3 +33,17 @@ button:
       - lg_magic_remote.key:
           id: lg_bt
           key: "hdmi3"
+  - platform: template
+    name: "HDMI 4"
+    icon: mdi:hdmi-port
+    on_press:
+      - lg_magic_remote.key:
+          id: lg_bt
+          key: "hdmi4"
+  - platform: template
+    name: "SimpLink"
+    icon: mdi:link-variant
+    on_press:
+      - lg_magic_remote.key:
+          id: lg_bt
+          key: "simplink"

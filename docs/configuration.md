@@ -46,7 +46,7 @@ lg_magic_remote:
 | Option | Default | Meaning |
 |---|---|---|
 | `ir_remote_id` | none | an `lg_ir_remote`. Keys fall back to IR while the TV isn't connected, Pair sends the IR pairing code, and the TV's universal-control commands are transmitted as IR. Without it, the remote answers universal-control commands with "not supported". |
-| `device_name` | `LGE MR23` | the Bluetooth name the TV sees. `LGE MR23` (LG's MR20GA replacement remote) is the tested one. As `LGE MR19BA`, the C9 ignored the Netflix and Prime Video keys and never moved the pointer. |
+| `device_name` | `LGE MR23` | the Bluetooth name the TV sees. `LGE MR23` (LG's MR20GA replacement remote) is the tested one. As `LGE MR19BA`, the C9 ignored the Netflix and Prime Video keys, although its firmware classes both names as the same remote type. |
 | `manufacturer_string` | `SCD 21.2,BA 35,webOS` | LG manufacturer data in the advertisement: the calibration (SCD) and battery versions, as an MR20GA advertises them |
 | `advertise_on_boot` | `true` | advertise at boot, so the TV can reconnect |
 | `address` | the chip's own | Bluetooth public address. The TV identifies the remote by this address, for the bond and for wake from standby (docs/protocol/wake.md), so changing it means pairing again. |
@@ -71,10 +71,12 @@ From a lambda: `id(lg_bt).key("home")`, `id(lg_bt).press(0x8044, 80)`, `id(lg_bt
 How `key` sends:
 
 - **While the TV is connected:** over Bluetooth. Keys without a Bluetooth code (the HDMI inputs) go over IR.
-- **While it isn't:** over IR when an `lg_ir_remote` is linked. The remote also asks the TV to reconnect.
+- **While it isn't:** over IR when an `lg_ir_remote` is linked and the key has an IR code. Otherwise the key waits
+  up to 8 s for the TV to reconnect and is then sent over Bluetooth, as a real Magic Remote does. Either way the
+  remote asks the TV to reconnect.
 - **Power keys:**
-  - `power` and `poweron` wake a TV in standby over Bluetooth (docs/protocol/wake.md), and use IR only if that
-    can't be sent.
+  - `power` and `poweron` wake a TV in standby over Bluetooth (docs/protocol/wake.md) and, with IR linked, also
+    send the discrete IR power-on.
   - `poweron` does nothing while the TV is connected.
   - `poweroff` turns a connected TV off over Bluetooth, and otherwise sends the discrete IR off, which leaves a TV
     in standby as it is.
@@ -153,6 +155,8 @@ The same names work for `lg_magic_remote.key` and `lg_ir_remote.press`.
 | `hdmi1` | HDMI 1 |  | yes |
 | `hdmi2` | HDMI 2 |  | yes |
 | `hdmi3` | HDMI 3 |  | yes |
+| `hdmi4` | HDMI 4 |  | yes |
+| `simplink` | SimpLink | | yes |
 | `0` | 0 | yes | yes |
 | `1` | 1 | yes | yes |
 | `2` | 2 | yes | yes |

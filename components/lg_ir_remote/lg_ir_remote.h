@@ -26,6 +26,11 @@ class LGIRRemote : public Component {
 
   void set_transmitter(remote_transmitter::RemoteTransmitterComponent *tx) { this->tx_ = tx; }
   void set_hold_style(HoldStyle s) { this->hold_style_ = s; }
+  void set_allow_unsafe_codes(bool a) { this->allow_unsafe_codes_ = a; }
+
+  /// True for LG codes that open hotel, factory or service functions, or the set-top dialog that swallows every
+  /// key (docs/protocol/ir-keys.md). send() refuses them unless allow_unsafe_codes is set.
+  static bool is_unsafe(uint32_t code);
 
   /// Send a 32-bit LG code, e.g. 0x20DF22DD (OK). hold_ms > 0 holds the key.
   void send(uint32_t code, uint32_t hold_ms = 0);
@@ -50,6 +55,7 @@ class LGIRRemote : public Component {
  protected:
   remote_transmitter::RemoteTransmitterComponent *tx_{nullptr};
   HoldStyle hold_style_{HOLD_REPEAT_CODES};
+  bool allow_unsafe_codes_{false};
   uint32_t last_carrier_{0};  // carrier of the last transmission (see transmit_raw)
   uint8_t toggle_{0};         // RC5/RC6-style toggle state for ZipIR code sets that have one
 

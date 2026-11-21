@@ -220,8 +220,11 @@ void LGMagicRemote::loop() {
   } else if (!this->presses_.empty() && now - this->last_report_ >= 30) {
     Press &p = this->presses_.front();
     if (!lgmr_subscribed(LGMR_FD_IN)) {
-      ESP_LOGW(TAG, "key 0x%04X dropped: TV not connected/subscribed", p.code);
-      this->presses_.pop_front();
+      if (now - p.queued_at >= KEY_WAIT_MS) {
+        ESP_LOGW(TAG, "key 0x%04X dropped: the TV didn't reconnect within %u s", p.code,
+                 (unsigned) (KEY_WAIT_MS / 1000));
+        this->presses_.pop_front();
+      }
     } else {
       bool in_stream = p.wheel || p.code == 0x8044;  // OK (wheel press) clicks at the pointer
       if (this->motion_ && !in_stream)
@@ -556,8 +559,8 @@ void LGMagicRemote::handle_f9_(const std::vector<uint8_t> &cmd) {
         ESP_LOGI(TAG, "version request 11 left unanswered (scd_mode 2)");
         break;
       }
-      // Firmware version (older TVs; the C9 asks on every pointer start). Reply 12 <major> <zone> <version>, as an
-      // MR20GA answered it (github.com/brainrom/lg-magic PR #8: major 21, zone 97, 02 02 28 34 23 + ff padding). The TV
+      // Firmware version (older TVs; the C9 asks on every pointer start). Reply 12 <major> <minor> <version>, as an
+      // MR20GA answered it (github.com/brainrom/lg-magic PR #8: major 21, minor 97, 02 02 28 34 23 + ff padding). The TV
       // gates further commands on the major byte.
       {
         // Bytes 8-10 and 11-13: the universal-control code sets we hold, 14-16 the primary (set-top power) one;
@@ -629,6 +632,9 @@ void LGMagicRemote::handle_f9_(const std::vector<uint8_t> &cmd) {
       this->send_fd_(0x800D);
       this->send_fd_(0x0000);
       break;
+    case 0x15:  // "OTA standby": the TV is preparing a remote firmware update; there is none for this remote
+      ESP_LOGD(TAG, "F9 15 (OTA standby), not answered");
+      break;
     case 0x05:  // voice keep-alive, no answer
       ESP_LOGD(TAG, "voice: keep-alive (F9 05)");
       break;
@@ -639,7 +645,9 @@ void LGMagicRemote::handle_f9_(const std::vector<uint8_t> &cmd) {
 }
 
 void LGMagicRemote::press(uint16_t code, uint32_t hold_ms) {
-  this->presses_.push_back(Press{code, 0, hold_ms});
+  this->presses_.push_back(Press{code, 0, hold_ms, millis()});
+  if (!lgmr_subscribed(LGMR_FD_IN))
+    lgmr_reconnect();
 }
 
 bool LGMagicRemote::press(const std::string &name, uint32_t hold_ms) {
@@ -657,9 +665,11 @@ bool LGMagicRemote::press(const std::string &name, uint32_t hold_ms) {
 }
 
 void LGMagicRemote::wheel(int8_t notches) {
+  // One notch per report. The TV accepts -9..+9 in a report, but an app then gets a single wheel event (dy +-53)
+  // whatever the count, so 5 notches in one report scroll an app by one (tested on the C9).
   int8_t step = notches > 0 ? 1 : -1;
   for (int i = 0; i < abs(notches); i++)
-    this->presses_.push_back(Press{0, step, 0});
+    this->presses_.push_back(Press{0, step, 0, millis()});
 }
 
 void LGMagicRemote::forget() {
@@ -978,8 +988,10 @@ bool LGMagicRemote::ir_send_(const std::string &name) {
 void LGMagicRemote::key(const std::string &name) {
   bool connected = lgmr_subscribed(LGMR_FD_IN);
   // Discrete power. Connected means the TV is on: Power on has nothing to do, Power off is Bluetooth Power. In
-  // standby there is no link: Power and Power on wake the TV over Bluetooth (IR only if the burst can't be sent),
-  // and Power off sends the discrete IR off, which leaves a TV in standby alone.
+  // standby there is no link: Power and Power on wake the TV over Bluetooth and, with IR linked, also send the
+  // discrete IR power-on, which a TV that is already on ignores. (The wake packet was tested from deep standby; in
+  // the first minute after switch-off the TV checks it differently, docs/protocol/wake.md.) Power off sends the
+  // discrete IR off, which leaves a TV in standby alone.
   if (name == "poweron" && connected) {
     ESP_LOGI(TAG, "Power on: the TV is connected, so it is on already");
     return;
@@ -990,13 +1002,22 @@ void LGMagicRemote::key(const std::string &name) {
   }
   if (connected && this->press(name))
     return;
-  if (!connected && (name == "power" || name == "poweron") && this->wake_burst_(4000, 0) == 0)
+  if (!connected && (name == "power" || name == "poweron")) {
+    bool woke = this->wake_burst_(4000, 0) == 0;
+    if (!this->ir_send_("poweron") && !woke)
+      ESP_LOGW(TAG, "key %s: can't wake the TV (no wake burst, no IR)", name.c_str());
     return;
-  if (!this->ir_send_(name))
-    ESP_LOGW(TAG, "key %s: %s", name.c_str(),
-             connected ? "no Bluetooth code and no IR code" : "the TV is not connected and there is no IR code to send");
-  if (!connected)
-    lgmr_reconnect();  // like a bonded remote woken by a key: ask the TV to reconnect
+  }
+  if (this->ir_send_(name)) {
+    if (!connected)
+      lgmr_reconnect();
+    return;
+  }
+  // No IR path: queue the Bluetooth key; it goes out once the TV has reconnected (press() asks it to).
+  if (!this->press(name))
+    ESP_LOGW(TAG, "key %s: no Bluetooth code and no IR code", name.c_str());
+  else if (!connected)
+    ESP_LOGI(TAG, "key %s: waiting for the TV to reconnect", name.c_str());
 }
 
 void LGMagicRemote::pair() {

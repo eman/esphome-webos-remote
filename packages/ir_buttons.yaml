@@ -361,6 +361,20 @@ button:
           id: lg_ir
           key: "hdmi3"
   - platform: template
+    name: "HDMI 4"
+    icon: mdi:hdmi-port
+    on_press:
+      - lg_ir_remote.press:
+          id: lg_ir
+          key: "hdmi4"
+  - platform: template
+    name: "SimpLink"
+    icon: mdi:link-variant
+    on_press:
+      - lg_ir_remote.press:
+          id: lg_ir
+          key: "simplink"
+  - platform: template
     name: "0"
     icon: mdi:numeric-0
     on_press:

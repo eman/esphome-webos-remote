@@ -22,7 +22,9 @@ are sent, first bit in the top bit. NEC sends every byte least significant bit f
 
 - `20 DF` is the NEC address `0x04` and its complement `0xFB`, each bit-reversed.
 - `cc` bit-reversed is the NEC command, and that command **is the TV's key index**: the TV looks it up in its
-  internal key table (on the C9, 349 entries, indices `0x000`-`0x15C`).
+  internal key table (on the C9, 349 entries, indices `0x000`-`0x15C`). The C9's firmware holds two such tables,
+  one in the standby microcontroller and one in the TV software; they differ at 33 indices. IR keys follow the
+  microcontroller's table: Search, Recent and Screen remote have no entry in the other one, yet work over IR.
 - Indices above `0xFF` (Japanese broadcast digit keys on the C9) don't fit in an NEC command, so no IR code reaches
   them.
 
@@ -94,6 +96,8 @@ Every key in `KEYS` in `components/lg_ir_remote/lg_ir_remote.cpp`. "Key" is the 
 | `hdmi1` | HDMI 1 | `0x20DF738C` | `0xCE` | none |
 | `hdmi2` | HDMI 2 | `0x20DF33CC` | `0xCC` | none |
 | `hdmi3` | HDMI 3 | `0x20DF9768` | `0xE9` | none |
+| `hdmi4` | HDMI 4 | `0x20DF5BA4` | `0xDA` | none |
+| `simplink` | SimpLink (HDMI-CEC) menu | `0x20DF7E81` | `0x7E` | none (IR only; untested over Bluetooth) |
 | `0` | 0 | `0x20DF08F7` | `0x10` | `0x8010` |
 | `1` | 1 | `0x20DF8877` | `0x11` | `0x8011` |
 | `2` | 2 | `0x20DF48B7` | `0x12` | `0x8012` |
@@ -117,6 +121,9 @@ Notes:
   `KEYS` and was not tested.
 - **Advanced settings** (`0x80B8`), **Input hub** (`0x80B9`) and **Voice** (`0x808B`) are Bluetooth only: the TV's
   key table has no IR entry for them.
+
+Tested and left out: Disney+ (index `0x31`, `0x20DF8C73`), which the C9's table maps to an app key, did nothing
+with the app installed.
 
 ## Screen remote caveat
 
@@ -147,8 +154,17 @@ to see what they do. Indices to avoid (the IR code is `0x20DF`, the index bit-re
 | `0x68` | self-diagnosis |
 | `0x69` | white-balance adjustment |
 | `0x84`-`0x87` | factory volume presets |
-| `0x88` | another discrete factory function, next to the volume presets |
+| `0x88` | discrete "substrate" (factory) function, next to the volume presets |
 | `0x99` | auto-configure |
+| `0x3F` | set-top-box power: likely the IR form of Bluetooth `0x8099`, which opens a dialog that swallows every key |
+| `0x98` | the index of Bluetooth set-top menu `0x8098` (unlabelled) |
+| `0xDB` | hotel mode "ready" in the TV software's table |
+| `0x5F` | digital setup in the TV software's table (a regional app key in the other) |
+| `0xDF`, `0x70` | 3D test pattern, discrete multi-PIP |
+| `0xEA`, `0xEB`, `0xEF` | front-panel key press, long press and music player |
+| `0x95`, `0x51`, `0xEC`, `0x1F` | Eye Q and unlabelled entries in the same service range |
+| `0xF8`, `0x6A`, `0x6D`, `0x6E`, `0x6F` | unlabelled entries next to white balance and self-diagnosis |
+| `0xA4`, `0xA5`, `0xAD`, `0xBC`, `0xBE`, `0x25` | unlabelled entries just before auto-configure and hotel mode |
 | `0xA6`, `0xEE`, `0xA8` | HDMI, USB and second-USB checks |
 | `0xD1`, `0xD2` | QR and test-pattern checks |
 | `0xF9` | tilt check |
@@ -159,6 +175,9 @@ to see what they do. Indices to avoid (the IR code is `0x20DF`, the index bit-re
 | `0xDE` | `0x20DF7B84`: harmless, but it only shows the "press the wheel" notice; the old Magic Remote sends it for keys it can't send over IR |
 
 Many other entries in the table have no label in the firmware; an unlabelled index is no proof that it is safe.
+
+`lg_ir_remote` refuses every index in this table except `0xDE` (`send()` logs an error and sends nothing), unless
+`allow_unsafe_codes: true` is set. `tests/check_keys.py` checks that the list in the code and this table agree.
 
 Two Bluetooth codes to avoid as well: `0x8099` (set-top power) and `0x8098` (set-top menu). On a TV with no
 universal-control device set up they open a "use the Magic Remote to control your set-top box?" dialog that takes

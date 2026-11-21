@@ -125,7 +125,7 @@ real MR25GB remote, as documented by other open projects, and works on the C9 (C
 | | Report `0x2A4D`, reference `FE 01` | Input: voice audio |
 | | Report `0x2A4D`, reference `F9 02` | Output: the TV writes commands here too |
 | Battery `0x180F` | Battery Level `0x2A19` | |
-| Device Information `0x180A` | PnP ID and strings | PnP ID uses the vendor and product IDs of the MR19/MR20 family |
+| Device Information `0x180A` | PnP ID and strings | PnP ID `000f:3412` (Broadcom), as the MR20 family reports it; an MR19's own firmware reports Realtek `005d:0000`. The TV doesn't check it |
 | Scan Parameters `0x1813` | | |
 | LG vendor service (128-bit UUID) | Two characteristics | Never used by the C9 (Tested) |
 
@@ -153,7 +153,7 @@ project does not use them.
 | 4-9 | 6 | Gyroscope axes 0, 1, 2: signed 16-bit, big-endian | Firmware |
 | 10-15 | 6 | Accelerometer axes 0, 1, 2: signed 16-bit, big-endian | Firmware |
 | 16-17 | 2 | Key code, unsigned 16-bit, big-endian; `0x0000` = no key | Firmware, Tested |
-| 18 | 1 | Wheel, signed: notches in this report | Firmware, Tested |
+| 18 | 1 | Wheel, signed: notches in this report. The TV accepts -9 to +9, but an app gets one wheel event (`deltaY` ±53) per report whatever the count, so `scroll` sends one notch per report | Firmware, Tested |
 
 - The TV accepts only modes 1 and 2 (Firmware).
 - **Mode 2 (navigation)** is for keys outside a pointer session: arrows move the focus and OK selects. With
@@ -262,6 +262,9 @@ Long-press actions on the C9 (keymap for `LGE MR…` remotes), checked by holdin
 | Settings | A system panel (the keymap says Advanced settings) |
 | Screen remote | A system panel (the keymap says Input) |
 
+The keymap also lists long presses that weren't tried: Dash (BML), Live zoom (magnifier), Up/Down (screen
+down) and `…` (audio description; holding `…` for 1.5 s did nothing) (Firmware).
+
 Each target also has its own code (table above), so a long press is never needed to reach it.
 
 ## F9 commands
@@ -346,7 +349,7 @@ The reply has opcode `12`:
 |---:|---|---|
 | 0 | `12` | |
 | 1 | Major version. The TV reads the fields below only when it is above `0x11` (Firmware) | `0x15` |
-| 2 | Zone | `0x61` |
+| 2 | Minor version: the TV logs bytes 1-3 as `major.minor.patch` (Firmware) | `0x61` |
 | 3-7 | Firmware version bytes. The TV reads offsets 6 and 7 as the battery thresholds "mid" and "low" (Firmware) | `02 02 28 34 23` (mid 52, low 35) |
 | 8-13 | Two stored universal-control code-set IDs, 3 bytes each, `FF FF FF` = none | |
 | 14-16 | The primary (set-top power) code-set ID | |

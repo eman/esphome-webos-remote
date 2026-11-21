@@ -63,4 +63,6 @@ KEYS = [
     ("HDMI 1", "hdmi1", "mdi:hdmi-port", ("ir",)),
     ("HDMI 2", "hdmi2", "mdi:hdmi-port", ("ir",)),
     ("HDMI 3", "hdmi3", "mdi:hdmi-port", ("ir",)),
+    ("HDMI 4", "hdmi4", "mdi:hdmi-port", ("ir",)),
+    ("SimpLink", "simplink", "mdi:link-variant", ("ir",)),
 ] + [(str(n), str(n), f"mdi:numeric-{n}", BOTH) for n in range(10)]

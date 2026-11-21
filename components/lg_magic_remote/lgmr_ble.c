@@ -60,7 +60,8 @@ static const uint8_t HID_INFO[] = {0x00, 0x00, 0x00, 0x01};
 static const uint8_t EXT_REPORT_REF[] = {0x19, 0x2a};
 static uint8_t protocol_mode = 0x01;
 static const uint8_t BATTERY[] = {100};
-// Broadcom 000f:3412: the AN-MR19BA / MR20 family (sirfragles/lgmagic). The MR25 is Realtek 005d:8762.
+// Broadcom 000f:3412, as the MR20 family reports it (sirfragles/lgmagic). An MR19 reports Realtek 005d:0000 and the
+// MR25 005d:8762; the TV doesn't check the PnP ID.
 static const uint8_t PNP_ID[] = {0x01, 0x0f, 0x00, 0x12, 0x34, 0x00, 0x01};
 static const uint8_t SYSTEM_ID[] = {0x00, 0x01, 0x02, 0x00, 0x00, 0x03, 0x04, 0x05};
 

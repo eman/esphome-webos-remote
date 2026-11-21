@@ -113,6 +113,11 @@ filter is only armed for ThinQ registrations or the short pattern is not what it
 
 This project sends the short form only when it has no bond with a TV, and logs a warning.
 
+In that first minute the TV's software also checks the long form, by comparing the TV address in the packet with
+its own as text; whether the case matches was not established, and the long form was only tested from deep standby.
+So with `lg_ir_remote` linked, **Power** and **Power on** in standby send the discrete IR power-on as well, which a
+TV that is already on ignores.
+
 ## Results on the C9 (2026-11-20)
 
 Each deep-standby trial waited 5 minutes after the TV was switched off.

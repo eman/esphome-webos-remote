@@ -110,7 +110,11 @@ class LGMagicRemote : public Component {
     uint16_t code;
     int8_t wheel;
     uint32_t hold_ms;
+    uint32_t queued_at{0};  // millis() when queued; a key waits up to KEY_WAIT_MS for the TV to reconnect
   };
+  // Like a bonded Magic Remote, which keeps a key pressed while the link was down and sends it once the TV has
+  // reconnected (it falls back to IR only when its reconnect advertising times out).
+  static const uint32_t KEY_WAIT_MS = 8000;
 
   void handle_write_(const Write &w);
   void handle_f9_(const std::vector<uint8_t> &cmd);

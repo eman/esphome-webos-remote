@@ -31,7 +31,7 @@ static const IRKey KEYS[] = {
     {"launcher", 0x20DF42BD},  {"search", 0x20DF1EE1},    {"recent", 0x20DFAD52},   {"livetv", 0x20DFF00F},
     {"livemenu", 0x20DF7986},  {"record", 0x20DFBD42},    {"prevtrack", 0x20DF4DB2}, {"nexttrack", 0x20DFCD32},
     {"aspect", 0x20DF9E61},    {"screenremote", 0x20DF6996}, {"userguide", 0x20DF5EA1}, {"dash", 0x20DF32CD},
-    {"hdmi1", 0x20DF738C},     {"hdmi2", 0x20DF33CC},     {"hdmi3", 0x20DF9768},    {"0", 0x20DF08F7},
+    {"hdmi1", 0x20DF738C},     {"hdmi2", 0x20DF33CC},     {"hdmi3", 0x20DF9768},     {"hdmi4", 0x20DF5BA4},     {"simplink", 0x20DF7E81},    {"0", 0x20DF08F7},
     {"1", 0x20DF8877},         {"2", 0x20DF48B7},         {"3", 0x20DFC837},        {"4", 0x20DF28D7},
     {"5", 0x20DFA857},         {"6", 0x20DF6897},         {"7", 0x20DFE817},        {"8", 0x20DF18E7},
     {"9", 0x20DF9867},
@@ -61,12 +61,38 @@ bool LGIRRemote::press(const std::string &name, uint32_t hold_ms) {
   return true;
 }
 
+// TV key-table indices (the NEC command byte, bit-reversed) that must not be sent: hotel and factory modes, service
+// checks and adjustments, the set-top-box dialog, front-panel emulation, and unlabelled entries inside the service
+// ranges. See docs/protocol/ir-keys.md.
+static const uint8_t UNSAFE_INDICES[] = {
+    0x1F, 0x25, 0x33, 0x3F, 0x4E, 0x4F, 0x51, 0x5F, 0x68, 0x69, 0x6A, 0x6D, 0x6E, 0x6F, 0x70, 0x84, 0x85, 0x86,
+    0x87, 0x88, 0x95, 0x98, 0x99, 0xA4, 0xA5, 0xA6, 0xA8, 0xAD, 0xBC, 0xBE, 0xD1, 0xD2, 0xDB, 0xDF, 0xEA, 0xEB,
+    0xEC, 0xEE, 0xEF, 0xF8, 0xF9, 0xFA, 0xFB, 0xFC, 0xFD, 0xFE, 0xFF,
+};
+
+bool LGIRRemote::is_unsafe(uint32_t code) {
+  if ((code >> 16) != 0x20DF)
+    return false;  // not addressed to an LG TV
+  uint8_t cmd = (code >> 8) & 0xFF, index = 0;
+  for (int i = 0; i < 8; i++)
+    if (cmd & (1 << i))
+      index |= 0x80 >> i;
+  for (uint8_t u : UNSAFE_INDICES)
+    if (u == index)
+      return true;
+  return false;
+}
+
 void LGIRRemote::send(uint32_t code, uint32_t hold_ms) { this->send(code, hold_ms, this->hold_style_); }
 
 void LGIRRemote::send(uint32_t code, uint32_t hold_ms, HoldStyle style) {
   // A held NEC key starts a new frame every ~108 ms. Repeated whole frames are separate presses to the TV (a held
   // Back steps back once per frame); NEC repeat codes (9 ms / 2.25 ms / 0.56 ms) are one held key, which the TV
   // auto-repeats only where it makes sense (arrows, volume).
+  if (!this->allow_unsafe_codes_ && is_unsafe(code)) {
+    ESP_LOGE(TAG, "not sending 0x%08" PRIX32 ": a hotel, factory, service or set-top code (allow_unsafe_codes)", code);
+    return;
+  }
   uint32_t times = hold_ms ? std::max<uint32_t>(1, hold_ms / 108) : 1;
   ESP_LOGI(TAG, "IR LG 0x%08" PRIX32 " x%" PRIu32 "%s", code, times,
            times > 1 ? (style == HOLD_REPEAT_CODES ? " (repeat codes)" : " (full frames)") : "");
