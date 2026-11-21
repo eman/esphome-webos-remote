@@ -18,6 +18,8 @@ jobs:
           python3 scripts/gen_buttons.py
           python3 scripts/gen_compile_tests.py
           git diff --exit-code
+      - name: CI compile matrix matches tests/compile
+        run: python3 scripts/check_ci_matrix.py
       - name: Key tables
         run: python3 tests/check_keys.py
       - name: Scrub check
@@ -38,8 +40,7 @@ jobs:
           - ir-only-esp32c6
           - ir-only-esp32
           - bluetooth-only-esp32c6
-          - bluetooth-ir-esp32c6
-          - bluetooth-ir-esp32s3
+          - bluetooth-only-esp32s3
           - capture-esp32c6
     steps:
       - uses: actions/checkout@v4
