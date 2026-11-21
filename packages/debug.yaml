@@ -1,0 +1,95 @@
+# Test and porting tools for the Bluetooth remote (docs/porting.md). Not needed for normal use. Capture mode and
+# serial commands also need `lg_magic_remote: debug: {capture: true, serial_commands: true}`.
+api:
+  actions:
+    # Handle hex as if the TV had written it to the F9 report (universal-control commands etc.).
+    - action: inject_f9
+      variables:
+        hex: string
+      then:
+        - lambda: "id(lg_bt).inject_f9(hex);"
+    # Wake advert with another PDU type: 0 non-connectable (the one that works), 1 connectable, 2 scannable.
+    - action: wake_tv_pdu
+      variables:
+        seconds: float
+        pdu: int
+      then:
+        - lambda: "id(lg_bt).wake_tv((uint32_t) (seconds * 1000), pdu);"
+    # Advertise any data (hex, whole AD structures) for `seconds`, e.g. to try wake packets on other TV years.
+    - action: adv_burst
+      variables:
+        hex: string
+        seconds: float
+        pdu: int
+      then:
+        - lambda: "id(lg_bt).adv_burst(hex, (uint32_t) (seconds * 1000), pdu);"
+    # Pointer wake gesture: alternating strokes on one gyro axis.
+    - action: shake
+      variables:
+        axis: int
+        rate: int
+        stroke_ms: int
+        strokes: int
+      then:
+        - lambda: "id(lg_bt).shake(axis, rate, (uint32_t) stroke_ms, strokes);"
+    # Raw gyro rates (0.0010653 rad/s per count) for `ms`.
+    - action: gyro
+      variables:
+        g0: int
+        g1: int
+        g2: int
+        ms: int
+      then:
+        - lambda: "id(lg_bt).motion((int16_t) g0, (int16_t) g1, (int16_t) g2, (uint32_t) ms);"
+    # Calibration (SCD, F9 17) and version (F9 11) replies: 0 = both, 1 = no SCD, 2 = no version.
+    - action: scd_mode
+      variables:
+        mode: int
+      then:
+        - lambda: "id(lg_bt).set_scd_mode(mode);"
+    # Motion report period in ms (default 10 = 100 Hz).
+    - action: motion_period
+      variables:
+        ms: int
+      then:
+        - lambda: "id(lg_bt).set_motion_period((uint32_t) ms);"
+    # move_pointer tuning: K (px per radian, default 2156) and the glide rate (mean +- amp counts/s at hz).
+    - action: glide
+      variables:
+        k: float
+        mean: float
+        amp: float
+        hz: float
+      then:
+        - lambda: "id(lg_bt).set_glide(k, mean, amp, hz);"
+    # Sensor noise in every report (peak counts): default gyro 6, accel 40 (docs/protocol/pointer.md).
+    - action: jitter
+      variables:
+        gyro: int
+        accel: int
+      then:
+        - lambda: "id(lg_bt).set_jitter(gyro, accel);"
+    # Gravity in accelerometer counts (about 4096 per g).
+    - action: gravity
+      variables:
+        x: int
+        y: int
+        z: int
+      then:
+        - lambda: "id(lg_bt).set_gravity(x, y, z);"
+    # Drops the Bluetooth link; the TV reconnects within seconds.
+    - action: bt_reconnect
+      then:
+        - lambda: "id(lg_bt).bt_reconnect();"
+    # Capture mode (debug: capture: true): what = start | stop | dump | forget.
+    - action: capture
+      variables:
+        what: string
+      then:
+        - lambda: "id(lg_bt).capture(what);"
+    # F9 command to the captured remote, hex (e.g. "17").
+    - action: capture_cmd
+      variables:
+        hex: string
+      then:
+        - lambda: "id(lg_bt).capture_cmd(hex);"

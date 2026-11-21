@@ -1,0 +1,81 @@
+# Bluetooth LG Magic Remote: the ESP32 registers with the TV as its Magic Remote (keys, pointer, scroll wheel, wake
+# from standby). Add packages/bluetooth_buttons.yaml for one button per key, packages/voice.yaml for voice, and
+# packages/ir.yaml + packages/bluetooth_ir.yaml for infrared fallback and universal control.
+substitutions:
+  webos_remote_source: github://eman/esphome-webos-remote@v0.1.0
+
+external_components:
+  - source: ${webos_remote_source}
+    components: [lg_magic_remote]
+
+lg_magic_remote:
+  id: lg_bt
+
+binary_sensor:
+  - platform: template
+    name: Bluetooth connected
+    device_class: connectivity
+    entity_category: diagnostic
+    lambda: "return id(lg_bt).is_connected();"
+
+button:
+  # Registers this ESP32 as the TV's Magic Remote (it replaces any other one). Needs the IR pairing code: sent by
+  # this button when packages/bluetooth_ir.yaml links an IR LED, otherwise by any LG IR blaster (docs/pairing.md).
+  - platform: template
+    name: Pair with TV
+    icon: mdi:bluetooth-connect
+    entity_category: config
+    on_press:
+      - lg_magic_remote.pair: lg_bt
+  # Unpairs on both sides (tells the TV first). Pair again afterwards.
+  - platform: template
+    name: Forget TV
+    icon: mdi:bluetooth-off
+    entity_category: config
+    on_press:
+      - lg_magic_remote.forget: lg_bt
+  # Turns the TV on from standby over Bluetooth (docs/protocol/wake.md: needs a one-time registration on the TV).
+  - platform: template
+    name: Wake TV (Bluetooth)
+    icon: mdi:power-on
+    on_press:
+      - lg_magic_remote.wake_tv: lg_bt
+  - platform: template
+    name: Dump Bluetooth log
+    icon: mdi:text-box-search-outline
+    entity_category: diagnostic
+    on_press:
+      - lambda: "id(lg_bt).dump_ble_log();"
+
+api:
+  actions:
+    # A key by name (docs/configuration.md): over Bluetooth, or the IR fallback with packages/bluetooth_ir.yaml.
+    - action: key
+      variables:
+        name: string
+      then:
+        - lambda: "id(lg_bt).key(name);"
+    # Any Magic Remote key code, e.g. code: 32836 (0x8044, OK); hold_ms 0 = a short press.
+    - action: key_code
+      variables:
+        code: int
+        hold_ms: int
+      then:
+        - lambda: "id(lg_bt).press((uint16_t) code, hold_ms > 0 ? (uint32_t) hold_ms : 80);"
+    # Moves the pointer by about (dx, dy) pixels of the 1920x1080 UI (+ = right/down); OK then clicks there.
+    - action: move_pointer
+      variables:
+        dx: int
+        dy: int
+      then:
+        - lambda: "id(lg_bt).move_pointer(dx, dy);"
+    # Scroll wheel: notches, + = up.
+    - action: scroll
+      variables:
+        notches: int
+      then:
+        - lambda: "id(lg_bt).wheel((int8_t) notches);"
+    # Turns the TV on from standby over Bluetooth.
+    - action: wake_tv
+      then:
+        - lambda: "id(lg_bt).wake_tv(4000);"

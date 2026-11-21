@@ -1,0 +1,8 @@
+esphome-webos-remote
+Copyright (c) 2026 eman. Licensed under the MIT License (LICENSE).
+
+This project includes the SBC encoder from ESP-IDF (components/bt/host/bluedroid/external/sbc/encoder):
+  components/lg_magic_remote/sbc_*.c, sbc_*.h
+  Copyright (C) 1999-2012 Broadcom Corporation
+  Licensed under the Apache License, Version 2.0: http://www.apache.org/licenses/LICENSE-2.0
+  Changes are listed in components/lg_magic_remote/SBC-README.md.

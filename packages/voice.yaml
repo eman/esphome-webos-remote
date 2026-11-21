@@ -1,0 +1,21 @@
+# Voice: whatever Home Assistant plays on the "TV voice" media player (TTS or a sound file) reaches the TV's voice
+# recognition as if spoken into the Magic Remote's microphone. Needs packages/bluetooth.yaml. Home Assistant
+# transcodes to 16 kHz mono WAV for the mSBC encoder. If HTTPS media fails with mbedtls -0x7F00 (out of memory next
+# to Bluetooth and Wi-Fi), enable mbedTLS dynamic buffers (examples/bluetooth-ir.yaml).
+speaker:
+  - platform: lg_magic_remote
+    id: lg_voice_speaker
+    lg_magic_remote_id: lg_bt
+    buffer_duration: 250ms
+
+media_player:
+  - platform: speaker
+    id: lg_voice_player
+    name: TV voice
+    icon: mdi:microphone-message
+    buffer_size: 16000
+    announcement_pipeline:
+      speaker: lg_voice_speaker
+      format: WAV
+      sample_rate: 16000
+      num_channels: 1
