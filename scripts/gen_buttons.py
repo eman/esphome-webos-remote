@@ -1,4 +1,4 @@
-"""Writes packages/ir_buttons.yaml, packages/bluetooth_buttons.yaml and packages/bluetooth_ir.yaml from keys.py.
+"""Writes packages/ir_buttons.yaml and packages/bluetooth_buttons.yaml from keys.py.
 
 Run from the repository root: python3 scripts/gen_buttons.py (CI fails if the packages differ from its output).
 """
@@ -29,37 +29,22 @@ def write(path, text):
 def main():
     ir = [k for k in KEYS if "ir" in k[3]]
     bt = [k for k in KEYS if "bt" in k[3]]
-    ir_only = [k for k in KEYS if k[3] == ("ir",)]
 
     write(
         "packages/ir_buttons.yaml",
         HEADER
-        + "# One Home Assistant button per LG key, sent over infrared (needs packages/ir.yaml).\n"
-        + "# With the Bluetooth remote as well, use packages/bluetooth_buttons.yaml + packages/bluetooth_ir.yaml\n"
-        + "# instead: those send over Bluetooth and fall back to infrared.\n"
+        + "# One Home Assistant button per LG key, sent over infrared (needs packages/ir_base.yaml, or\n"
+        + "# packages/ir.yaml which bundles both). For a Bluetooth remote, use packages/bluetooth.yaml instead.\n"
         + "button:\n"
         + "".join(button(n, i, "lg_ir_remote.press", k) for n, k, i, _ in ir),
     )
     write(
         "packages/bluetooth_buttons.yaml",
         HEADER
-        + "# One Home Assistant button per Magic Remote key, sent over Bluetooth while the TV is connected (needs\n"
-        + "# packages/bluetooth.yaml). With packages/bluetooth_ir.yaml they fall back to infrared otherwise.\n"
+        + "# One Home Assistant button per Magic Remote key, sent over Bluetooth (needs\n"
+        + "# packages/bluetooth_base.yaml, or packages/bluetooth.yaml which bundles both).\n"
         + "button:\n"
         + "".join(button(n, i, "lg_magic_remote.key", k) for n, k, i, _ in bt),
-    )
-    write(
-        "packages/bluetooth_ir.yaml",
-        HEADER
-        + "# Links the Bluetooth remote (packages/bluetooth.yaml) to the infrared one (packages/ir.yaml): IR fallback\n"
-        + "# while the TV isn't connected, the IR pairing code for 'Pair with TV', and universal control (the TV's\n"
-        + "# set-top box control, sent as IR). Adds the keys that only exist over infrared.\n"
-        + "lg_magic_remote:\n  ir_remote_id: lg_ir\n\n"
-        + "button:\n"
-        + "  - platform: template\n    name: Universal control status\n    icon: mdi:remote\n"
-        + "    entity_category: diagnostic\n    on_press:\n"
-        + '      - lambda: "id(lg_bt).uei_status();"\n'
-        + "".join(button(n, i, "lg_magic_remote.key", k) for n, k, i, _ in ir_only),
     )
 
 

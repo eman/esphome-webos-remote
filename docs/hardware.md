@@ -11,8 +11,8 @@
 The Bluetooth component uses NimBLE directly, so it can't share the chip with `esp32_ble`,
 `esp32_ble_tracker` or `bluetooth_proxy`.
 
-With voice from HTTPS media (Home Assistant TTS), Bluetooth, Wi-Fi and TLS together need mbedTLS dynamic buffers;
-[`examples/bluetooth-ir.yaml`](../examples/bluetooth-ir.yaml) sets them.
+With voice from HTTPS media (Home Assistant TTS), Bluetooth, Wi-Fi and TLS together need mbedTLS dynamic buffers
+in the `esp32: framework: sdkconfig_options:` block (see [`packages/voice.yaml`](../packages/voice.yaml)).
 
 ## IR LED
 

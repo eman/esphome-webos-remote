@@ -30,4 +30,3 @@ substitutions:
 
 packages:
   bluetooth: !include ../../packages/bluetooth.yaml
-  bluetooth_buttons: !include ../../packages/bluetooth_buttons.yaml

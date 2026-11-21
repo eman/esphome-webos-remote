@@ -30,4 +30,3 @@ substitutions:
 
 packages:
   ir: !include ../../packages/ir.yaml
-  ir_buttons: !include ../../packages/ir_buttons.yaml

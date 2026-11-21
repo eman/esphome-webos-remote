@@ -34,9 +34,13 @@ Copy one of [`examples/`](examples) next to a `secrets.yaml` (see
 
 | Example | Packages | Gives you |
 |---|---|---|
-| [`ir-only.yaml`](examples/ir-only.yaml) | `ir`, `ir_buttons` | a button per IR key, actions for any code |
-| [`bluetooth-only.yaml`](examples/bluetooth-only.yaml) | `bluetooth`, `bluetooth_buttons` | Magic Remote keys, pointer, scroll, wake |
-| [`bluetooth-ir.yaml`](examples/bluetooth-ir.yaml) | `ir`, `bluetooth`, `bluetooth_buttons`, `bluetooth_ir`, `voice` | everything: Bluetooth with IR fallback, pairing over IR, universal control, voice |
+| [`ir-only.yaml`](examples/ir-only.yaml) | `ir` | an IR remote: a button per key, plus actions for any code |
+| [`bluetooth-only.yaml`](examples/bluetooth-only.yaml) | `bluetooth` | a Bluetooth Magic Remote: a button per key, pointer, scroll, wake |
+| [`capture.yaml`](examples/capture.yaml) | `bluetooth_base`, `debug` | capture a real Magic Remote's reports (see [docs/porting.md](docs/porting.md)) |
+
+`ir.yaml` and `bluetooth.yaml` each bundle the engine (`ir_base.yaml` / `bluetooth_base.yaml`) and one button per
+key (`ir_buttons.yaml` / `bluetooth_buttons.yaml`); add `voice.yaml` for voice. Include `ir.yaml` for an IR
+remote, `bluetooth.yaml` for a Bluetooth one.
 
 The packages import the components from this repository:
 
@@ -47,7 +51,6 @@ packages:
     ref: v0.1.0
     files:
       - packages/bluetooth.yaml
-      - packages/bluetooth_buttons.yaml
 ```
 
 For the Bluetooth remote, pair it with the TV once; see [docs/pairing.md](docs/pairing.md).

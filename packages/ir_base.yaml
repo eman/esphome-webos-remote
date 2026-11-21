@@ -1,0 +1,36 @@
+# The IR engine for an LG webOS TV: an IR LED on ${ir_tx_pin}, the lg_ir_remote component, and Home Assistant
+# actions for any LG code. For a ready-to-use remote with one button per key, include packages/ir.yaml (which
+# bundles this and packages/ir_buttons.yaml); include this alone for the engine only.
+substitutions:
+  webos_remote_source: github://eman/esphome-webos-remote@v0.1.0
+  ir_tx_pin: GPIO7
+
+external_components:
+  - source: ${webos_remote_source}
+    components: [lg_ir_remote]
+
+remote_transmitter:
+  id: lg_ir_tx
+  pin: ${ir_tx_pin}
+  carrier_duty_percent: 50%
+
+lg_ir_remote:
+  id: lg_ir
+  transmitter_id: lg_ir_tx
+
+api:
+  actions:
+    # Any LG code, e.g. code: 551494365 (0x20DF22DD, OK). hold_ms > 0 holds the key (NEC repeat codes).
+    - action: ir_code
+      variables:
+        code: int
+        hold_ms: int
+      then:
+        - lambda: "id(lg_ir).send((uint32_t) code, (uint32_t) (hold_ms > 0 ? hold_ms : 0));"
+    # A key by name (docs/configuration.md), e.g. name: hdmi1.
+    - action: ir_key
+      variables:
+        name: string
+        hold_ms: int
+      then:
+        - lambda: "id(lg_ir).press(name, (uint32_t) (hold_ms > 0 ? hold_ms : 0));"

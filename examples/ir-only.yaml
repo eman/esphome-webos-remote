@@ -29,4 +29,3 @@ packages:
     ref: v0.1.0
     files:
       - packages/ir.yaml
-      - packages/ir_buttons.yaml

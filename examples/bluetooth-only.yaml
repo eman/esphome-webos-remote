@@ -30,4 +30,3 @@ packages:
     ref: v0.1.0
     files:
       - packages/bluetooth.yaml
-      - packages/bluetooth_buttons.yaml

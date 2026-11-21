@@ -7,11 +7,9 @@ The TV accepts one Bluetooth Magic Remote at a time. Registering this one replac
 1. Flash the firmware. With `advertise_on_boot: true` (the default), the ESP32 starts advertising as
    `LGE MR23`.
 2. Turn the TV on.
-3. Press **Pair with TV** in Home Assistant, or run `lg_magic_remote.pair`.
-   - **With `bluetooth_ir.yaml` (IR linked):** the ESP32 sends the IR pairing code `0x20DFC13E` itself. The IR LED
-     must reach the TV.
-   - **Bluetooth only:** have something send `0x20DFC13E` once while the ESP32 advertises: any LG-capable IR blaster
-     (another ESPHome node with `lg_ir_remote`, a Broadlink, …). On the tested TV, the code is the only trigger.
+3. Press **Pair with TV** in Home Assistant, or run `lg_magic_remote.pair`. While the ESP32 advertises, the TV has
+   to receive the LG IR pairing code `0x20DFC13E` once: send it from any LG-capable IR blaster (another ESPHome node
+   with `lg_ir_remote`, a Broadlink, …) aimed at the TV. On the tested TV, this code is the only trigger.
 4. The TV connects, pairs (LE Secure Connections, no PIN), reads the HID layout and subscribes. This takes a few
    seconds. **Bluetooth connected** turns on.
 5. The TV asks for the motion calibration and creates its pointer device. After that, `move_pointer` works.

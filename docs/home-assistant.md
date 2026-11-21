@@ -4,11 +4,10 @@ The ESP32 shows up through the ESPHome integration. What the packages add:
 
 | Package | Entities | Actions (`esphome.<device>_<action>`) |
 |---|---|---|
-| `ir.yaml` | none | `ir_code` (code, hold_ms), `ir_key` (name, hold_ms) |
-| `ir_buttons.yaml` | a button per IR key | |
-| `bluetooth.yaml` | **Bluetooth connected**, **Pair with TV**, **Forget TV**, **Wake TV (Bluetooth)**, **Dump Bluetooth log** | `key` (name), `key_code` (code, hold_ms), `move_pointer` (dx, dy), `scroll` (notches), `wake_tv` |
-| `bluetooth_buttons.yaml` | a button per Magic Remote key | |
-| `bluetooth_ir.yaml` | HDMI 1-3 buttons, **Universal control status** | |
+| `ir_base.yaml` | none | `ir_code` (code, hold_ms), `ir_key` (name, hold_ms) |
+| `ir.yaml` | `ir_base` + a button per IR key | (as `ir_base`) |
+| `bluetooth_base.yaml` | **Bluetooth connected**, **Pair with TV**, **Forget TV**, **Wake TV (Bluetooth)**, **Dump Bluetooth log** | `key` (name), `key_code` (code, hold_ms), `move_pointer` (dx, dy), `scroll` (notches), `wake_tv` |
+| `bluetooth.yaml` | `bluetooth_base` + a button per Magic Remote key | (as `bluetooth_base`) |
 | `voice.yaml` | **TV voice** media player | |
 | `debug.yaml` | | test actions, see [porting.md](porting.md) |
 

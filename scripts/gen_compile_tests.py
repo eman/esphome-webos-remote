@@ -10,8 +10,7 @@ MATRIX = [
     ("ir-only", "esp32c6"),
     ("ir-only", "esp32"),
     ("bluetooth-only", "esp32c6"),
-    ("bluetooth-ir", "esp32c6"),
-    ("bluetooth-ir", "esp32s3"),
+    ("bluetooth-only", "esp32s3"),
     ("capture", "esp32c6"),
 ]
 

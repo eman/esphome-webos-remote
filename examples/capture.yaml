@@ -29,7 +29,7 @@ packages:
     url: https://github.com/eman/esphome-webos-remote
     ref: v0.1.0
     files:
-      - packages/bluetooth.yaml
+      - packages/bluetooth_base.yaml
       - packages/debug.yaml
 
 lg_magic_remote:

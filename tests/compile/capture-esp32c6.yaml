@@ -29,7 +29,7 @@ substitutions:
   webos_remote_source: ../../components
 
 packages:
-  bluetooth: !include ../../packages/bluetooth.yaml
+  bluetooth_base: !include ../../packages/bluetooth_base.yaml
   debug: !include ../../packages/debug.yaml
 
 lg_magic_remote:
